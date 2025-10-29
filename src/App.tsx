@@ -1,5 +1,6 @@
 import { AppProvider, useApp } from '@/contexts/AppContext';
 import Layout from '@/components/layout/Layout';
+import EmotionCheckpoint from '@/components/checkpoint/EmotionCheckpoint';
 import Dashboard from '@/components/dashboard/Dashboard';
 import EmotionTracker from '@/components/emotion-tracker/EmotionTracker';
 import ThoughtRecord from '@/components/thought-record/ThoughtRecord';
@@ -13,6 +14,9 @@ function AppContent() {
 
   const renderContent = () => {
     switch (state.activeTab) {
+      case 'checkpoint':
+      case 'home':
+        return <EmotionCheckpoint />;
       case 'dashboard':
         return <Dashboard />;
       case 'tracker':
@@ -26,8 +30,9 @@ function AppContent() {
       case 'progress':
         return <ProgressAnalysis />;
       case 'guide':
-      default:
         return <UsageGuide />;
+      default:
+        return <EmotionCheckpoint />;
     }
   };
 

@@ -25,7 +25,7 @@ const initialState: AppState = {
   thoughts: [],
   dearManPlans: [],
   isLoading: true,
-  activeTab: 'guide',
+  activeTab: 'checkpoint',
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {

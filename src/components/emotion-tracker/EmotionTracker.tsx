@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/Input';
 import { Slider } from '@/components/ui/Slider';
 import { EMOTIONS, BODY_FEELINGS, COPING_STRATEGIES } from '@/data/emotions';
 import type { EmotionEntry } from '@/types';
+import { AlertCircle, Brain, MessageSquare, TrendingUp } from 'lucide-react';
 
 const EmotionTracker: React.FC = () => {
   const { dispatch } = useApp();
@@ -15,6 +16,8 @@ const EmotionTracker: React.FC = () => {
   const [bodyFeeling, setBodyFeeling] = useState('');
   const [copingUsed, setCopingUsed] = useState('');
   const [effectiveness, setEffectiveness] = useState(5);
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [lastEntry, setLastEntry] = useState<EmotionEntry | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +40,8 @@ const EmotionTracker: React.FC = () => {
     };
 
     dispatch({ type: 'ADD_EMOTION', payload: entry });
+    setLastEntry(entry);
+    setShowRecommendation(true);
 
     // Reset form
     setSelectedEmotion('');
@@ -46,7 +51,136 @@ const EmotionTracker: React.FC = () => {
     setCopingUsed('');
     setEffectiveness(5);
 
-    alert('情绪记录已保存!');
+    // Scroll to recommendation
+    setTimeout(() => {
+      document.getElementById('recommendation')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const navigateTo = (tab: string) => {
+    dispatch({ type: 'SET_ACTIVE_TAB', payload: tab });
+  };
+
+  const getRecommendation = () => {
+    if (!lastEntry) return null;
+
+    const negativeEmotions = ['焦虑', '愤怒', '悲伤', '恐惧', '羞愧', '内疚', '嫉妒', '孤独', '失望'];
+    const isNegative = negativeEmotions.includes(lastEntry.emotion);
+
+    if (lastEntry.intensity >= 8) {
+      return (
+        <Card className="bg-red-50 border-red-200 p-6" id="recommendation">
+          <div className="flex items-start space-x-4">
+            <AlertCircle className="w-10 h-10 text-red-600 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-red-900 mb-2">
+                🚨 情绪强度很高！建议立即使用危机技能
+              </h3>
+              <p className="text-red-800 mb-3">
+                你记录的{lastEntry.emotion}强度为{lastEntry.intensity}/10，这个强度下很难进行深入思考。
+                建议先使用TIPP技能降低情绪强度：
+              </p>
+              <ul className="space-y-1 text-red-800 mb-4 text-sm">
+                <li>• 冷水洗脸 - 30秒快速降低强度</li>
+                <li>• 剧烈运动 - 10分钟释放压力</li>
+                <li>• 深呼吸 - 4-2-6呼吸法</li>
+              </ul>
+              <div className="flex space-x-3">
+                <Button onClick={() => navigateTo('crisis')} variant="danger">
+                  使用TIPP技能
+                </Button>
+                <Button onClick={() => setShowRecommendation(false)} variant="outline">
+                  稍后处理
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    if (lastEntry.intensity >= 5 && isNegative) {
+      return (
+        <Card className="bg-purple-50 border-purple-200 p-6" id="recommendation">
+          <div className="flex items-start space-x-4">
+            <Brain className="w-10 h-10 text-purple-600 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-purple-900 mb-2">
+                💭 建议做思维记录
+              </h3>
+              <p className="text-purple-800 mb-3">
+                {lastEntry.emotion}强度为{lastEntry.intensity}/10，这种中等强度的负面情绪通常与负面思维有关。
+                建议使用思维记录来识别和挑战这些想法。
+              </p>
+              <div className="bg-white rounded p-3 mb-4 text-sm">
+                <div className="font-semibold text-purple-900 mb-1">触发事件：</div>
+                <div className="text-gray-700">{lastEntry.trigger || '(未记录)'}</div>
+              </div>
+              <div className="flex space-x-3">
+                <Button onClick={() => navigateTo('thought-record')} variant="primary">
+                  做思维记录
+                </Button>
+                <Button onClick={() => setShowRecommendation(false)} variant="outline">
+                  知道了
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    if (lastEntry.trigger && lastEntry.trigger.includes('人')) {
+      return (
+        <Card className="bg-blue-50 border-blue-200 p-6" id="recommendation">
+          <div className="flex items-start space-x-4">
+            <MessageSquare className="w-10 h-10 text-blue-600 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-blue-900 mb-2">
+                💬 涉及人际互动？考虑准备沟通
+              </h3>
+              <p className="text-blue-800 mb-3">
+                你的触发事件似乎涉及人际互动。如果需要表达需求或解决冲突，
+                可以使用DEAR MAN工具提前准备。
+              </p>
+              <div className="flex space-x-3">
+                <Button onClick={() => navigateTo('communication')} variant="primary">
+                  准备DEAR MAN
+                </Button>
+                <Button onClick={() => setShowRecommendation(false)} variant="outline">
+                  不需要
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="bg-green-50 border-green-200 p-6" id="recommendation">
+        <div className="flex items-start space-x-4">
+          <TrendingUp className="w-10 h-10 text-green-600 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-green-900 mb-2">
+              ✅ 记录完成！
+            </h3>
+            <p className="text-green-800 mb-3">
+              你的{lastEntry.emotion}强度为{lastEntry.intensity}/10。
+              {isNegative ? '持续记录可以帮助识别模式。' : '记录积极情绪同样重要！'}
+            </p>
+            <div className="flex space-x-3">
+              <Button onClick={() => navigateTo('progress')} variant="secondary">
+                查看进展
+              </Button>
+              <Button onClick={() => setShowRecommendation(false)} variant="ghost">
+                继续记录
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
   };
 
   return (
@@ -204,6 +338,9 @@ const EmotionTracker: React.FC = () => {
           </Button>
         </form>
       </Card>
+
+      {/* 智能推荐 */}
+      {showRecommendation && getRecommendation()}
     </div>
   );
 };
