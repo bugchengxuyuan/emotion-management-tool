@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/Input';
 import { Slider } from '@/components/ui/Slider';
 import { EMOTIONS, BODY_FEELINGS, COPING_STRATEGIES } from '@/data/emotions';
 import type { EmotionEntry } from '@/types';
-import { AlertCircle, Brain, MessageSquare, TrendingUp, PlusCircle, History } from 'lucide-react';
+import { AlertCircle, Brain, MessageSquare, TrendingUp, PlusCircle, History, Calendar, ChevronRight } from 'lucide-react';
+import { formatDate, formatTime, getEmotionColor } from '@/lib/utils';
 import EmotionHistory from './EmotionHistory';
 
 const EmotionTracker: React.FC = () => {
-  const { dispatch } = useApp();
+  const { state, dispatch } = useApp();
   const [activeTab, setActiveTab] = useState<'record' | 'history'>('record');
   const [selectedEmotion, setSelectedEmotion] = useState('');
   const [intensity, setIntensity] = useState(5);
@@ -20,6 +21,19 @@ const EmotionTracker: React.FC = () => {
   const [effectiveness, setEffectiveness] = useState(5);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [lastEntry, setLastEntry] = useState<EmotionEntry | null>(null);
+
+  // 获取最近的5条记录
+  const recentEmotions = [...state.emotions]
+    .sort((a, b) => {
+      const dateTimeA = new Date(`${a.date} ${a.time}`).getTime();
+      const dateTimeB = new Date(`${b.date} ${b.time}`).getTime();
+      return dateTimeB - dateTimeA;
+    })
+    .slice(0, 5);
+
+  const getEmotionEmoji = (emotionName: string) => {
+    return EMOTIONS.find(e => e.name === emotionName)?.emoji || '😐';
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -384,6 +398,68 @@ const EmotionTracker: React.FC = () => {
 
           {/* 智能推荐 */}
           {showRecommendation && getRecommendation()}
+
+          {/* 最近的记录 */}
+          {recentEmotions.length > 0 && (
+            <Card className="mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  最近的记录 ({recentEmotions.length})
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab('history')}
+                  className="flex items-center space-x-1"
+                >
+                  <span>查看全部</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {recentEmotions.map((emotion) => (
+                  <div
+                    key={emotion.id}
+                    className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-start space-x-3 flex-1">
+                      <span className="text-3xl">{getEmotionEmoji(emotion.emotion)}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-semibold text-gray-900">{emotion.emotion}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getEmotionColor(emotion.intensity)}`}>
+                            {emotion.intensity}/10
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600 flex items-center space-x-2">
+                          <Calendar className="w-3 h-3" />
+                          <span>{formatDate(emotion.date)} {formatTime(emotion.time)}</span>
+                        </div>
+                        {emotion.trigger && (
+                          <div className="text-sm text-gray-700 mt-2 line-clamp-2">
+                            {emotion.trigger}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {state.emotions.length > 5 && (
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setActiveTab('history')}
+                    className="w-full"
+                  >
+                    查看全部 {state.emotions.length} 条记录
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
         </>
       ) : (
         <EmotionHistory />
