@@ -91,8 +91,11 @@ const EmotionTracker: React.FC = () => {
                 <Button onClick={() => navigateTo('crisis')} variant="danger">
                   使用TIPP技能
                 </Button>
-                <Button onClick={() => setShowRecommendation(false)} variant="outline">
-                  稍后处理
+                <Button onClick={() => setActiveTab('history')} variant="outline">
+                  查看历史记录
+                </Button>
+                <Button onClick={() => setShowRecommendation(false)} variant="ghost">
+                  继续记录
                 </Button>
               </div>
             </div>
@@ -122,8 +125,11 @@ const EmotionTracker: React.FC = () => {
                 <Button onClick={() => navigateTo('thought-record')} variant="primary">
                   做思维记录
                 </Button>
-                <Button onClick={() => setShowRecommendation(false)} variant="outline">
-                  知道了
+                <Button onClick={() => setActiveTab('history')} variant="outline">
+                  查看历史记录
+                </Button>
+                <Button onClick={() => setShowRecommendation(false)} variant="ghost">
+                  继续记录
                 </Button>
               </div>
             </div>
@@ -149,8 +155,11 @@ const EmotionTracker: React.FC = () => {
                 <Button onClick={() => navigateTo('communication')} variant="primary">
                   准备DEAR MAN
                 </Button>
-                <Button onClick={() => setShowRecommendation(false)} variant="outline">
-                  不需要
+                <Button onClick={() => setActiveTab('history')} variant="outline">
+                  查看历史记录
+                </Button>
+                <Button onClick={() => setShowRecommendation(false)} variant="ghost">
+                  继续记录
                 </Button>
               </div>
             </div>
@@ -172,8 +181,11 @@ const EmotionTracker: React.FC = () => {
               {isNegative ? '持续记录可以帮助识别模式。' : '记录积极情绪同样重要！'}
             </p>
             <div className="flex space-x-3">
+              <Button onClick={() => setActiveTab('history')} variant="primary">
+                查看历史记录
+              </Button>
               <Button onClick={() => navigateTo('progress')} variant="secondary">
-                查看进展
+                查看进展分析
               </Button>
               <Button onClick={() => setShowRecommendation(false)} variant="ghost">
                 继续记录
