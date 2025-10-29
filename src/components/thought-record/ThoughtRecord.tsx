@@ -4,9 +4,11 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
 import { Slider } from '@/components/ui/Slider';
+import { BookOpen, History } from 'lucide-react';
+import ThoughtHistory from './ThoughtHistory';
 import type { ThoughtRecord } from '@/types';
 
-const ThoughtRecordComponent: React.FC = () => {
+const ThoughtRecordForm: React.FC = () => {
   const { dispatch } = useApp();
   const [situation, setSituation] = useState('');
   const [emotion, setEmotion] = useState('');
@@ -189,6 +191,43 @@ const ThoughtRecordComponent: React.FC = () => {
           </Button>
         </form>
       </Card>
+    </div>
+  );
+};
+
+const ThoughtRecordComponent: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'record' | 'history'>('record');
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Tab Navigation */}
+      <div className="flex space-x-2 bg-white rounded-lg p-1 shadow-sm">
+        <button
+          onClick={() => setActiveTab('record')}
+          className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-md transition-colors ${
+            activeTab === 'record'
+              ? 'bg-purple-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="font-medium">记录思维</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-md transition-colors ${
+            activeTab === 'history'
+              ? 'bg-purple-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span className="font-medium">历史记录</span>
+        </button>
+      </div>
+
+      {/* Content */}
+      {activeTab === 'record' ? <ThoughtRecordForm /> : <ThoughtHistory />}
     </div>
   );
 };

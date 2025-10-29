@@ -6,10 +6,12 @@ import { Textarea } from '@/components/ui/Input';
 import { Slider } from '@/components/ui/Slider';
 import { EMOTIONS, BODY_FEELINGS, COPING_STRATEGIES } from '@/data/emotions';
 import type { EmotionEntry } from '@/types';
-import { AlertCircle, Brain, MessageSquare, TrendingUp } from 'lucide-react';
+import { AlertCircle, Brain, MessageSquare, TrendingUp, PlusCircle, History } from 'lucide-react';
+import EmotionHistory from './EmotionHistory';
 
 const EmotionTracker: React.FC = () => {
   const { dispatch } = useApp();
+  const [activeTab, setActiveTab] = useState<'record' | 'history'>('record');
   const [selectedEmotion, setSelectedEmotion] = useState('');
   const [intensity, setIntensity] = useState(5);
   const [trigger, setTrigger] = useState('');
@@ -185,7 +187,36 @@ const EmotionTracker: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card>
+      {/* Tab 导航 */}
+      <div className="flex space-x-2 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('record')}
+          className={`flex items-center space-x-2 px-4 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === 'record'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <PlusCircle className="w-5 h-5" />
+          <span>记录情绪</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex items-center space-x-2 px-4 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === 'history'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <History className="w-5 h-5" />
+          <span>历史记录</span>
+        </button>
+      </div>
+
+      {/* 内容区域 */}
+      {activeTab === 'record' ? (
+        <>
+          <Card>
         <CardHeader>
           <CardTitle>记录当前情绪</CardTitle>
         </CardHeader>
@@ -339,8 +370,12 @@ const EmotionTracker: React.FC = () => {
         </form>
       </Card>
 
-      {/* 智能推荐 */}
-      {showRecommendation && getRecommendation()}
+          {/* 智能推荐 */}
+          {showRecommendation && getRecommendation()}
+        </>
+      ) : (
+        <EmotionHistory />
+      )}
     </div>
   );
 };
