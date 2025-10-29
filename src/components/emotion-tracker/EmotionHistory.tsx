@@ -3,7 +3,7 @@ import { useApp } from '@/contexts/AppContext';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { formatDate, formatTime, getEmotionColor } from '@/lib/utils';
-import { Trash2, Calendar, TrendingUp, Filter } from 'lucide-react';
+import { Trash2, Calendar, TrendingUp, Filter, Download } from 'lucide-react';
 import { EMOTIONS } from '@/data/emotions';
 
 const EmotionHistory: React.FC = () => {
@@ -70,6 +70,76 @@ const EmotionHistory: React.FC = () => {
 
   const getEmotionEmoji = (emotionName: string) => {
     return EMOTIONS.find(e => e.name === emotionName)?.emoji || '😐';
+  };
+
+  const exportToMarkdown = () => {
+    const exportDate = new Date().toLocaleString('zh-CN');
+    const emotionsToExport = filteredEmotions.length > 0 ? filteredEmotions : state.emotions;
+
+    let markdown = `# 情绪追踪记录\n\n`;
+    markdown += `> 导出时间: ${exportDate}\n\n`;
+
+    // 统计概览
+    markdown += `## 📊 统计概览\n\n`;
+    markdown += `- **总记录数**: ${stats.total}\n`;
+    markdown += `- **平均情绪强度**: ${stats.avgIntensity}/10\n`;
+    markdown += `- **最常见情绪**: ${stats.mostCommon}\n`;
+    markdown += `- **高强度情绪次数** (≥7): ${stats.highIntensityCount}\n\n`;
+
+    // 情绪分布统计
+    const emotionCounts: Record<string, number> = {};
+    emotionsToExport.forEach(e => {
+      emotionCounts[e.emotion] = (emotionCounts[e.emotion] || 0) + 1;
+    });
+    markdown += `### 情绪分布\n\n`;
+    Object.entries(emotionCounts)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([emotion, count]) => {
+        const emoji = getEmotionEmoji(emotion);
+        const percentage = ((count / emotionsToExport.length) * 100).toFixed(1);
+        markdown += `- ${emoji} **${emotion}**: ${count}次 (${percentage}%)\n`;
+      });
+    markdown += `\n`;
+
+    // 详细记录
+    markdown += `## 📝 详细记录\n\n`;
+    markdown += `> 共 ${emotionsToExport.length} 条记录\n\n`;
+
+    emotionsToExport.forEach((emotion, index) => {
+      const emoji = getEmotionEmoji(emotion.emotion);
+      markdown += `### ${index + 1}. ${emoji} ${emotion.emotion}\n\n`;
+      markdown += `**日期时间**: ${formatDate(emotion.date)} ${formatTime(emotion.time)}\n\n`;
+      markdown += `**情绪强度**: ${emotion.intensity}/10\n\n`;
+
+      if (emotion.trigger) {
+        markdown += `**触发事件**:\n${emotion.trigger}\n\n`;
+      }
+
+      if (emotion.bodyFeeling) {
+        markdown += `**身体感觉**:\n${emotion.bodyFeeling}\n\n`;
+      }
+
+      if (emotion.copingUsed) {
+        markdown += `**应对技能**:\n${emotion.copingUsed}\n\n`;
+      }
+
+      if (emotion.effectiveness !== undefined) {
+        markdown += `**应对效果**: ${emotion.effectiveness}/10\n\n`;
+      }
+
+      markdown += `---\n\n`;
+    });
+
+    // 创建下载
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `情绪追踪记录_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (state.emotions.length === 0) {
@@ -147,48 +217,59 @@ const EmotionHistory: React.FC = () => {
         </div>
       </Card>
 
-      {/* 筛选器 */}
+      {/* 筛选器和导出 */}
       <Card className="p-4">
-        <div className="flex items-center space-x-4">
-          <Filter className="w-5 h-5 text-gray-600" />
-          <div className="flex-1 flex flex-wrap gap-3">
-            <select
-              value={selectedEmotion}
-              onChange={(e) => setSelectedEmotion(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="all">所有情绪</option>
-              {EMOTIONS.map(emotion => (
-                <option key={emotion.name} value={emotion.name}>
-                  {emotion.emoji} {emotion.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="all">所有日期</option>
-              {uniqueDates.map(date => (
-                <option key={date} value={date}>
-                  {formatDate(date)}
-                </option>
-              ))}
-            </select>
-            {(selectedEmotion !== 'all' || selectedDate !== 'all') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectedEmotion('all');
-                  setSelectedDate('all');
-                }}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center space-x-4 flex-1">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <div className="flex flex-wrap gap-3">
+              <select
+                value={selectedEmotion}
+                onChange={(e) => setSelectedEmotion(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
               >
-                清除筛选
-              </Button>
-            )}
+                <option value="all">所有情绪</option>
+                {EMOTIONS.map(emotion => (
+                  <option key={emotion.name} value={emotion.name}>
+                    {emotion.emoji} {emotion.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="all">所有日期</option>
+                {uniqueDates.map(date => (
+                  <option key={date} value={date}>
+                    {formatDate(date)}
+                  </option>
+                ))}
+              </select>
+              {(selectedEmotion !== 'all' || selectedDate !== 'all') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedEmotion('all');
+                    setSelectedDate('all');
+                  }}
+                >
+                  清除筛选
+                </Button>
+              )}
+            </div>
           </div>
+
+          {/* 导出按钮 */}
+          <Button
+            onClick={exportToMarkdown}
+            className="flex items-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>导出为 Markdown</span>
+          </Button>
         </div>
       </Card>
 
